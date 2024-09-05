@@ -1,0 +1,203 @@
+%-- coding: UTF-8 --
+\documentclass[12pt, letterpaper, twoside]{article}
+\usepackage[UTF8]{ctex}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{geometry} % 页面布局
+\usepackage{amsmath} % 数学公式
+\usepackage{graphicx} % 图片插入
+\usepackage{hyperref} % 超链接
+\usepackage{listings} % 代码段
+\usepackage{fancyhdr} % 页眉页脚
+\usepackage{titlesec} % 章节标题格式
+\usepackage{xcolor} % 颜色
+\usepackage{tocloft} % 目录设置
+\usepackage{indentfirst} % 首段缩进
+\usepackage{array}
+
+
+\title{第一次实验报告}
+\author{谢宇倩 21070001106}
+\date{August 2024}
+
+\begin{document}
+
+\maketitle
+
+\newpage
+
+\section{版本控制Git}
+\begin{enumerate}
+ \item 课后练习
+ \begin{itemize}
+ 
+ \includegraphics[scale=0.4]{images/kehou.png}
+ 
+ \item 克隆本课程网站的仓库。
+
+ \includegraphics[scale=0.4]{images/fork.png}
+ 
+ \item 将版本历史可视化并进行探索。
+ 
+  {\color{gray} git long --all --graph --decorate } 
+
+ \includegraphics[scale=0.3]{images/ke2.png}
+  
+ \item 是谁最后修改了 README.md文件？
+
+ {\color{gray}git log -1 README.md }
+
+ 可以看到，是这个叫yuzq的人最后一次修改了这个文件。
+
+  \includegraphics[scale=0.5]{images/ke3.png}
+ 
+ \item 最后一次修改文件中 collections: 行时的提交信息是什么？
+
+ {\color{gray} git blame _config.yml | grep collections }
+
+ 最后一次修改提交的信息如下：
+ 
+ \includegraphics[scale=0.4]{images/ke4.png}
+
+ {\color{gray} git show --pretty=format:"\%s" a88b4eac | head -1 }
+ 
+ \includegraphics[scale=0.4]{images/ke5.png}
+
+ \item 使用 Git 时的一个常见错误是提交本不应该由 Git 管理的大文件，或是将含有敏感信息的文件提交给 Git。尝试向仓库中添加一个文件并添加提交信息，然后将其从历史中删除。
+
+ 首先添加敏感信息 ：
+ 
+ {\color{gray} echo "password123">my_password} 
+ 
+ {\color{gray} git add .} 
+ 
+ {\color{gray} git commit -m "add password123 to file"} 
+ 
+ {\color{gray} git log HEAD } 
+
+ \includegraphics[scale=0.4]{images/ke6.png}
+
+ 然后清除提交记录：
+ 
+ {\color{gray} git filter-branch }
+ 
+ \includegraphics[scale=0.4]{images/ke7.png}
+ 
+ \item 从 GitHub 上克隆某个仓库，修改一些文件。当您使用 git stash 会发生什么？当您执行 git log --all --oneline 时会显示什么？通过 git stash pop 命令来撤销 git stash 操作，什么时候会用到这一技巧？
+
+ 这里还是用的克隆的本课程仓库，我创建了一个新分支，然后使用vim命令随便改了改README中的内容，然后用 {\color{gray} git status } 查看了一下我刚才做的修改：
+
+ \includegraphics[scale=0.4]{images/ke8.png}
+
+ 使用 {\color{gray} git stash } 
+
+  \includegraphics[scale=0.4]{images/ke9.png}
+
+ git命令把我所作的更改暂存了，并将我的更改另存成新的stash，然后将工作目录清理干净。
+
+ 执行 {\color{gray} git log --all --oneline } ：
+
+ \includegraphics[scale=0.3]{images/ke10.png}
+
+ 显示了所有分支的提交历史，有每个提交哈希，还描述提交了什么。
+
+ 通过 {\color{gray} git stash pop } 撤销操作：
+
+  \includegraphics[scale=0.4]{images/ke11.png} 
+
+  git stash pop会恢复最近一次的stash的工作目录，然后从stash列表移除它，可以在想要恢复之前暂存的更改但是不想立即提交更改的时候用，或者在切换分支之前git stash保存当前更改，然后回来的时候git stash pop恢复更改。
+ 
+ \item 创建一个别名。
+
+ \includegraphics[scale=0.4]{images/ke12.png} 
+ 
+ \item 创建全局忽略规则。
+
+ \includegraphics[scale=0.4]{images/ke13.png}
+ 
+ \item 克隆本课程网站的仓库。
+ 
+ \includegraphics[scale=0.4]{images/ke14.png} 
+
+ 倒是没找到错字或者需要改进的地方。
+ 
+ 我自己又在github上也Fork了本网站的仓库：
+
+ \includegraphics[scale=0.4]{images/ke15.png} 
+ 
+ \end{itemize}
+
+ 
+ \item 自找样例
+
+ 我先是初始化了仓库，然后在仓库中使用{\color{gray} touch }命令创造了一个markdown文件，然后使用vim编辑器编辑这个文本：
+ 
+ \includegraphics[scale=0.5]{images/my1.png}
+
+ 然后使用 {\color{gray} git add} 命令将我的这个readme添加到git暂存区，再 {\color{gray} git commit -m "Initial commit with README" } 提交暂存区文件（这里忘了我没有设置用户信息了，所以git失败，并给出了让我设置用户名和邮箱的提示，设置完成后就提交暂存区文件成功了）：
+ 
+ \includegraphics[scale=0.5]{images/my2.png}
+
+ 然后 {\color{gray} git branch feature } 创建一个新分支， {\color{gray} git checkout feature } 切换到新分支，并在这个分支上创建了一个.py文件并使用vim编辑器随便写了点东西。
+ 
+ 和前面一样， {\color{gray} git add } 将文件提交到暂存区，然后 {\color{gray} git commit -m } 提交暂存区文件，可以看到终端里显示回了我做的更改。
+
+ 再 {\color{gray} git checkout master } 回到主分支，{\color{gray} git merge feature } 将分支做的修改合并到主分支，然后 {\color{gray} git log } 查看了一下提交的日志：
+ 
+ \includegraphics[scale=0.5]{images/my3.png}
+
+ 最后 {\color{gray} git diff} 查看 两次提交的不同，然后 {\color{gray} git reset --hard } 回滚到上一次提交：
+
+ \includegraphics[scale=0.3]{images/my4.png}
+
+\end{enumerate}
+
+\section{Latex文档编辑}
+
+\begin{enumerate}
+
+\item 文本编辑、排版和插入图片
+
+前面所有的实验报告内容即为展示。
+
+\item 创建表格
+
+ \begin{table}[!htp]
+    \centering
+    \renewcommand{\arraystretch}{1.5}
+    \begin{tabular}{|l|c|r|}
+        \hline
+        这  & 是 & 一 \\
+        \hline
+        个 & 表 & 格 \\
+        \hline
+        的 & 示 & 例 \\
+        \hline
+    \end{tabular}
+    \caption{我的表格示例} \label{one}
+ \end{table}
+ 
+\item 数学公式
+
+$$\sum_{i=1}^{\infty} e^{i} $$
+
+$$\int_{low}^{high} x^x dx$$
+
+\end{enumerate}
+
+\section{心得体会}
+
+\begin{itemize}
+
+本次实验学习了版本控制（Git）和Latex文档编辑并进行了一系列实践操作。
+
+说来惭愧，这是我第一次系统地了解和学习 Git ，在之前我虽然一直知道 Github 和 Gitee 这俩平台，但只是很浅地知道这是可以多人一起写代码的，对于它们具体的逻辑和使用方法一窍不通。本次实验后我学会了如何使用Git管理和跟踪代码的变化，我觉得Git是一个特别强大的工具，使用它能在软件开发过程中并行开发，并跟踪每一次变化，在出现问题的时候准确找到出现错误的版本并回滚。通过学习版本控制，我掌握了基本的计算机开发技能，深入地理解了软件开发流程，我相信它会成为我未来科研或工作生涯中不可或缺的助手。
+
+本次实验还学习了Latex文档编辑。在刚刚接触它的时候，我有点被“劝退”，因为它的语法对于初次接触的人来说真的有点复杂，并且需要不断编译才能看到最新效果，有点麻烦。不过随着进一步的学习和写这一份实验报告的实践，我开始体会到了Latex的强大，它很高效，很美观、很严谨。它能够自己处理文档的排版细节，让我只需要关注文本内容而不用费时思考排版。它的数学公式库也十分强大，一个不定积分式在word里得打半天，而Overleaf里一下就出来了，这对于我们理工科生来说真的是一个大福音。此外，Latex排版能符合学术界的规范和要求，如果未来我有幸走上科研之路，它将会是我的得力助手。
+
+总而言之，本次实验提升了我的代码管理能力和文档编辑能力，我相信这些工具在未来会一直很有用！
+
+\end{itemize}
+
+\item 附：github链接
+
+\end{document}
