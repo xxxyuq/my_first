@@ -1,0 +1,275 @@
+%-- coding: UTF-8 --
+\documentclass[12pt, letterpaper, twoside]{article}
+\usepackage[UTF8]{ctex}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{geometry} % 页面布局
+\usepackage{graphicx} % 图片插入
+\usepackage{hyperref} % 超链接
+\usepackage{listings} % 代码段
+\usepackage{fancyhdr} % 页眉页脚
+\usepackage{titlesec} % 章节标题格式
+\usepackage{xcolor} % 颜色
+\usepackage{tocloft} % 目录设置
+\usepackage{indentfirst} % 首段缩进
+\usepackage{array}
+\lstset{
+     columns = fixed,       
+     basicstyle = \linespread{0.8} \ttfamily,             % 设置行距，字体
+     numberstyle = \tiny \color{gray},                    % 设定行号格式
+     keywordstyle = \bfseries \color[RGB]{40,40,255},     % 设定关键字颜色
+     numberstyle = \footnotesize \color{darkgray},           
+     commentstyle = \color[RGB]{0,96,96},                 % 设置代码注释的格式
+     stringstyle = \color[RGB]{128,0,0},                  % 设置字符串格式
+     frame = single,                                      % 不显示背景边框
+     backgroundcolor = \color[RGB]{245,245,244},          % 设定背景颜色
+     showstringspaces = false,                            % 不显示字符串中的空格
+     language=Python                                          % 设置语言
+}
+
+\title{第二次实验报告}
+\author{谢宇倩 21070001106}
+\date{September 2024}
+
+\begin{document}
+
+\maketitle
+\newpage
+
+\section{Shell工具和脚本}
+
+\begin{itemize}
+\item 阅读 man ls ，然后使用 ls 命令进行如下操作:\\
+- 所有文件（包括隐藏文件）\\
+- 文件打印以人类可以理解的格式输出 (例如，使用 454M 而不是 454279954)\\
+- 文件以最近访问顺序排序\\
+- 以彩色文本显示输出结果\\
+所有文件：\lstinline|ls -a|\\
+人类可以理解的格式输出：\lstinline|ls -h|\\
+以彩色文本显示输出结果：\lstinline|ls --color=auto|\\
+最终以\lstinline|ls -laht --color=auto|\textbf{输出典型输出}：\\
+\includegraphics [width=0.9\textwidth]{images/1.png} 
+
+\item 编写两个 bash 函数 marco 和 polo 执行下面的操作。\\
+每当你执行 marco 时，当前的工作目录应当以某种形式保存，当执行 polo 时，无论现在处在什么目录下，都应当 cd 回到当时执行 marco 的目录。 为了方便 debug，你可以把代码写在单独的文件 marco.sh 中，并通过 source marco.sh 命令，（重新）加载函数。\\
+\textbf{所写程序：}\\
+\includegraphics [width=0.9\textwidth]{images/3.png} \\
+在marco函数中用变量marco\_dir存储当前路径，然后向命令行输出marco成功的提示信息；在polo函数中cd进前面存储的路径，然后输出polo信息。\\
+\textbf{运行结果：}\\
+\includegraphics [width=0.9\textwidth]{images/2.png} \\
+在marco后使用cd回到上一级，polo又回到了之前marco的路径。可以看到，两个函数均运行成功。\\
+
+\item 假设您有一个命令，它很少出错。因此为了在出错时能够对其进行调试，需要花费大量的时间重现错误并捕获输出。 编写一段 bash 脚本，运行如下的脚本直到它出错，将它的标准输出和标准错误流记录到文件，并在最后输出所有内容。 加分项：报告脚本在失败前共运行了多少次。\\
+\begin{lstlisting}
+ #!/usr/bin/env bash
+
+ n=$(( RANDOM % 100 ))
+
+ if [[ n -eq 42 ]]; then
+    echo "Something went wrong"
+    >&2 echo "The error was using magic numbers"
+    exit 1
+ fi
+
+ echo "Everything went according to plan"
+\end{lstlisting}
+我用了一个变量count来计数命令失败前运行了几次，用output.log记录标准输出和标准错误流（在每次执行这个脚本的时候会\lstinline|echo > output.log|清空脚本）。然后用一个for循环，从count=0开始，每次循环cont++，在循环中运行前面给出的脚本并将脚本的输出记录到output日志中，如果返回结果不等于0，即脚本运行错误，就输出output日志并输出一共运行了多少次后错误，然后break出循环。\\
+\textbf{整体bash脚本如下}：\\
+\includegraphics [width=0.9\textwidth]{images/4.png} \\
+\textbf{运行结果：}\\
+\includegraphics [width=0.9\textwidth]{images/5.png} \\
+可以看到在错误前运行了\textcolor{red}{51}次。\\
+
+\item 本节课我们讲解的 find 命令中的 -exec 参数非常强大，它可以对我们查找的文件进行操作。但是，如果我们要对所有文件进行操作呢？例如创建一个 zip 压缩文件？我们已经知道，命令行可以从参数或标准输入接受输入。在用管道连接命令时，我们将标准输出和标准输入连接起来，但是有些命令，例如 tar 则需要从参数接受输入。这里我们可以使用 xargs 命令，它可以使用标准输入中的内容作为参数。 例如 ls | xargs rm 会删除当前目录中的所有文件。您的任务是编写一个命令，它可以递归地查找文件夹中所有的 HTML 文件，并将它们压缩成 zip 文件。注意，即使文件名中包含空格，您的命令也应该能够正确执行。\\
+先创建那些HTML文件们：\\
+\includegraphics [width=0.9\textwidth]{images/6.png} \\
+\textbf{命令如下：}
+\begin{lstlisting}
+  find . -type f -name "*.html" 
+  | xargs -d '\n'  tar -cvzf html.zip
+\end{lstlisting}
+这里使用find命令查找type为文件，name以.html为后缀的文件，再用一个管道符将find命令的输出作为后面命令的输入。管道符后面用xargs命令将输入变成命令行参数，每一个参数以换行符结尾，将这些参数给tar命令将找到的所有.html文件都压缩归档到html.zip中。\\
+\textbf{运行结果：}\\
+\includegraphics [width=0.9\textwidth]{images/7.png} \\
+
+\item （进阶）编写一个命令或脚本递归的查找文件夹中最近使用的文件。更通用的做法，你可以按照最近的使用时间列出文件吗？\\
+\textbf{递归查找文件夹中最近使用的文件：}
+\begin{lstlisting}
+find . -type f -print0 | xargs -0 ls -lt | head
+\end{lstlisting}
+这里还是用find命令查找类型为文件的，-print0确保就算文件名中有空格命令也能正确执行，然后用管道符，xargs的-0参数和前面的-print0相匹配，每个输入以空格，就能实现按照最近使用时间列出文件。\\
+\textbf{查找结果：}\\
+\includegraphics [width=0.9\textwidth]{images/8.png} \\
+查找最近使用的文件只需要再用一个管道符，将前面这个输出输入给head命令，只展现第一行：\\
+\includegraphics [width=0.9\textwidth]{images/9.png}
+
+\end{itemize}
+
+\section{编辑器（Vim）}
+\begin{itemize}
+\item 完成vimtutor。\\
+由于全英文看着真的有点费劲，我找到了中文版vimtutor。\\
+\begin{lstlisting}
+vimtutor zh
+\end{lstlisting}
+通关vimtutor：\\
+\includegraphics [width=0.9\textwidth]{images/10.png} \\
+\item 下载我们提供的 vimrc，然后把它保存到 ~/.vimrc。 通读这个注释详细的文件 （用 Vim!）， 然后观察 Vim 在这个新的设置下看起来和使用起来有哪些细微的区别。\\
+\includegraphics [width=0.9\textwidth]{images/11.png} \\
+打开文件发现vim在新设置下，之前所写的所有语句前都加上了注释，告诉我们每个命令的具体含义。\\
+
+\item 安装和配置一个插件： ctrlp.vim.\\
+用\lstinline|mkdir -p ~/.vim/pack/vendor/start|创建插件文件夹。\\
+\includegraphics [width=0.9\textwidth]{images/12.png} \\
+下载这个插件：\lstinline|cd ~/.vim/pack/vendor/start; |\\
+\lstinline|git clone https://github.com/ctrlpvim/ctrlp.vim|\\
+\includegraphics [width=0.9\textwidth]{images/13.png} \\
+下载插件后在 ~/.vimrc添加设置\\
+\includegraphics [width=0.9\textwidth]{images/14.png} \\
+阅读这个插件的 文档。 尝试用 CtrlP 来在一个工程文件夹里定位一个文件，打开 Vim, 然后用 Vim 命令控制行开始 :CtrlP.\\
+\includegraphics [width=0.9\textwidth]{images/15.png} \\
+自定义 CtrlP：添加 configuration 到你的 ~/.vimrc 来用按 Ctrl-P 打开 CtrlP\\
+在 ~/.vimrc 文件中加入：\\
+\begin{lstlisting}
+let g:ctrlp_map ='<c-p>' 
+ let g:ctrlp_cmd = 'CtrlP'
+ let g:ctrlp_working_path_mode = 'ra' 
+\end{lstlisting}
+\includegraphics [width=0.9\textwidth]{images/17.png} \\
+以后进入Vim可以按下 Ctrl+P 在一个工程文件中定位文件。\\
+\item 在其他工具中设置 Vim 快捷键。\\
+经过学习和练习前面的例题，我已经知道了如何定义vim快捷键。vim的键映射是这样的：\\
+\begin{lstlisting}
+n前缀： 在普通模式下生效 
+v前缀： 在可视模式下生效 i前缀： 在插入模式下生效 
+c前缀： 在EX命令模式下生效
+nore前缀： 非递归 
+\end{lstlisting}
+我想让vim和windows一样ctrlP保存，和前面一样：
+\begin{lstlisting}
+cd ~/.vim/pack/vendor/start
+vim ~/.vimrc
+\end{lstlisting}
+然后添加代码：
+\begin{lstlisting}
+nnoremap <C-s> :w<CR>
+\end{lstlisting}
+完成。\\
+\end{itemize}
+
+\section{数据整理}
+\begin{itemize}
+\item 学习给出的的交互式正则表达式教程.\\
+\includegraphics [width=0.9\textwidth]{images/22.png} \\
+\item 统计 words 文件 (/usr/share/dict/words) 中包含至少三个 a 且不以 's 结尾的单词个数。\\
+\begin{lstlisting}
+cat /usr/share/dict/words | tr "[:upper:]" "[:lower:]" 
+| grep -E "^([^a]*a){3}.*$" | grep -v "'s$" | wc -l
+\end{lstlisting}
+这里先用cat命令连接文件并打印到输出设备（终端），然后用管道符将cat的输出作为后面转换命令tr的输入，将所有大写字母转换为小写，然后再用管道符到grep搜索，用正则表达式\lstinline|"^([^a]*a){3}.*$"|来匹配三个连续 'a' 开头的单词，再管道给grep用正则表达式匹配以s结尾的词\lstinline|"'s$"|，最后统计数量。\\
+输出结果为\textcolor{red}{854}。\\
+\includegraphics [width=0.9\textwidth]{images/18.png} \\
+这些单词中，出现频率前三的末尾两个字母是什么？ \\
+\begin{lstlisting}
+cat /usr/share/dict/words | tr "[:upper:]" "[:lower:]" 
+|grep -E "^([^a]*a){3}.*$" | grep -v "'s$" | sed -E 
+"s/.*([a-z]{2})$/\1/" | sort | uniq -c | sort | tail -n3
+\end{lstlisting}
+前半部分和上一个命令一样，这里就不解释了。然后将匹配到的含至少三个a 且不以's 结尾的单词给sed\lstinline|s/.*([a-z]{2})$/\1|匹配每个单词最后两个字母并替换，然后sort排序，再uniq去掉重复行，再次排序，最后给tail命令输出最后三行，就是出现频率前三的末尾两个字母了。\\
+从上图可以看到，它们是：\textcolor{red}{am、ce、ca}。\\
+共存在多少种词尾两字母组合？\\
+\begin{lstlisting}
+cat /usr/share/dict/words | tr "[:upper:]" "[:lower:]"
+| grep -E "^([^a]*a){3}.*$" | grep -v "'s$" | sed -E 
+"s/.*([a-z]{2})$/\1/" | sort | uniq | wc -l
+\end{lstlisting}
+前面也是一样的，将排序并去掉重复行的最后两个字母给\lstinline|wc -l|统计行数，输出不同的最后两个字母组合的数量。共存在\textcolor{red}{112}种字母组合。\\
+哪个组合从未出现过？\\
+先写一个脚本生成a-z两两所有的排列：\\
+\includegraphics [width=0.9\textwidth]{images/20.png} \\
+给脚本加上x权限然后运行，将它们输出到all.txt中：\\
+\includegraphics [width=0.9\textwidth]{images/19.png} \\
+把/usr/share/dict/words里所有单词转换为小写，筛选出以三个连续的 'a' 字母开头的单词，排除以 's' 结尾的单词，然后提取每个单词的最后两个字母，对提取的字母进行排序，去除重复之后输出到occurance.txt中：
+\begin{lstlisting}
+cat /usr/share/dict/words | tr "[:upper:]" "[:lower:]" 
+| grep -E "^([^a]*a){3}.*$" | grep -v "'s$" | sed -E 
+"s/.*([a-z]{2})$/\1/" | sort | uniq > occurance.txt
+\end{lstlisting}
+再用diff比较occurance.txt 和 all.txt 的内容（--unchanged-group-format=''将相同的内容设置为空字符串，剩下的就是不一样的部分），统计all中有而occurance中没有的组合个数。\\
+\includegraphics [width=0.9\textwidth]{images/21.png} \\
+得出结果：有\textcolor{red}{564}个。\\
+\item 进行原地替换听上去很有诱惑力，例如： sed s/REGEX/SUBSTITUTION/ input.txt > input.txt。但是这并不是一个明智的做法，为什么呢？还是说只有 sed 是这样的? 查看 man sed 来完成这个问题.\\
+查看sed的man page：\\
+\includegraphics [width=0.9\textwidth]{images/23.png} \\
+阅读后得知，的确不是一个明智的做法，而且不仅仅是sed，\textcolor{red}{对于任何命令都不应该在原地替换时使用重定向来覆盖原始文件}，因为在Linux系统中重定向会在命令执行之前清空目标文件，会导致数据丢失。\\
+\begin{lstlisting}
+sed s/REGEX/SUBSTITUTION/ input.txt > input.txt
+\end{lstlisting}
+时，系统打开input.txt进行读取，sed命令在内存中进行替换，将替换之后的内容重定向（>）到input.txt文件。\\
+重定向符（>）是在sed命令执行之前清空input文件，如果sed命令执行出错的话会丢失input中的数据。\\
+可以这样进行原地替换：\\
+\begin{lstlisting}
+sed -i.bak s/REGEX/SUBSTITUTION/ input.txt
+\end{lstlisting}
+这样会创造备份文件.bak，防止数据丢失。\\
+
+\item 找出您最近十次开机的开机时间平均数、中位数和最长时间。\\
+首先允许journalctl记录多次开机的日志.\\
+设置Storage=persistent 执行\lstinline|s/.*([a-z]{2})$/\1|后，重启\\
+\begin{lstlisting}
+journalctl --list-boots
+\end{lstlisting}
+\includegraphics [width=0.9\textwidth]{images/24.png} \\
+然后重启：\\
+\includegraphics [width=0.9\textwidth]{images/25.png} \\
+写脚本获取最近十次的启动时间数据：
+\begin{lstlisting}
+#!/bin/bash
+for i in {0..9}; do
+   journalctl -b-$i | grep "Startup finished in"
+done
+\end{lstlisting}
+\includegraphics [width=0.9\textwidth]{images/26.png} \\
+然后：\\
+\begin{lstlisting}
+#获取最长时间
+cat starttime.txt | grep "systemd\[1\]" | sed -E 
+"s/.*=\ (.*)s\.$/\1/"| sort | tail -n1
+#获取最短时间
+cat starttime.txt | grep "systemd\[1\]" | sed -E 
+"s/.*=\ (.*)s\.$/\1/"| sort -r | tail -n1
+#平均数
+cat starttime.txt | grep "systemd\[1\]" | sed -E 
+"s/.*=\ (.*)s\.$/\1/"| paste -sd+ | bc -l | awk 
+'{print $1/10}'
+# 中位数
+cat starttime.txt | grep "systemd\[1\]" | sed -E 
+"s/.*=\ (.*)s\.$/\1/"| sort |paste -sd\  | awk 
+'{print ($5+$6)/2}'
+\end{lstlisting}
+\includegraphics [width=0.9\textwidth]{images/28.png} \\
+得到平均数、中位数和最长时间。\\
+\item 查看之前三次重启启动信息中不同的部分
+\begin{lstlisting}
+cat last3start.txt | sed -E "s/.*pi\ (.*)/\1/" | sort 
+| uniq -c | sort | awk '$1!=3  { print }'
+\end{lstlisting}
+得到如下不同对比：\\
+\includegraphics [width=0.9\textwidth]{images/29.png} \\
+\end{itemize}
+
+\section{Shell工具和脚本}
+
+
+本次实验学习了Shell工具和脚本、编辑器Vim、数据整理。
+
+初次接触没有图形化的Terminal的时候，我觉得两眼一黑，不知道该怎么进行各种操作，但在最近几周的学习和实验，尤其是这周关于Shell工具和脚本的操作后，我发现命令行界面在执行大多数任务的时候远远比图形化用户界面强大，尤其是通过管道（|）组合出的各种复合命令，能够轻松处理复杂的任务。bash和Shell脚本是一种特别实用和高效的工具。此外，在编写脚本的过程中我经常得到bash: ./xxxx: Permission denied的提示，在查阅资料后我知道了文件权限的概念，更加深入理解了Linux系统的运作原理。如果我未来会从事系统开发、运维等工作的话，这些知识给我打下了坚实基础。
+
+Vim编辑器是一种特别高效的文本编辑器，虽然一开始也不太适应，但是通关vimtutor后我已经差不多掌握了，用vim可以在不使用鼠标的情况下完成复杂的文本编辑任务，这是其他编辑器难以做到的。通过习题的练习我还学会了更改vim的操作映射，将常见操作映射到快捷键上能够极大提高我编程时文本编辑的效率。
+
+至于数据整理，我学习了正则表达式，熟练掌握了通配符的使用，还学会了用sed等工具来进行数据清洗和整理，能用它们更改格式、选择特定行、抽取某些行等，我觉得这些工具在处理大量数据的时候特别强大。
+
+总而言之，本次实验掌握的工具不仅能提升编程技能和效率，也让我更深入地理解了计算机系统的工作原理。我觉得它们在我以后的学习、科研或者工作生涯中特别有用。
+
+\textbf{ 最后附上 github ：https://github.com/xxxyuq/my\_first}
+
+\end{document}
