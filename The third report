@@ -1,0 +1,483 @@
+%-- coding: UTF-8 --
+\documentclass[12pt, letterpaper, twoside]{article}
+\usepackage[UTF8]{ctex}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{geometry} % 页面布局
+\usepackage{graphicx} % 图片插入
+\usepackage{hyperref} % 超链接
+\usepackage{listings} % 代码段
+\usepackage{fancyhdr} % 页眉页脚
+\usepackage{titlesec} % 章节标题格式
+\usepackage{xcolor} % 颜色
+\usepackage{tocloft} % 目录设置
+\usepackage{indentfirst} % 首段缩进
+\usepackage{array}
+\lstset{
+     columns = fixed,       
+     basicstyle = \linespread{0.8} \ttfamily,             % 设置行距，字体
+     numberstyle = \tiny \color{gray},                    % 设定行号格式
+     keywordstyle = \bfseries \color[RGB]{40,40,255},     % 设定关键字颜色
+     numberstyle = \footnotesize \color{darkgray},           
+     commentstyle = \color[RGB]{0,96,96},                 % 设置代码注释的格式
+     stringstyle = \color[RGB]{128,0,0},                  % 设置字符串格式
+     frame = single,                                      % 不显示背景边框
+     backgroundcolor = \color[RGB]{245,245,244},          % 设定背景颜色
+     showstringspaces = false,                            % 不显示字符串中的空格
+     language=Python                                          % 设置语言
+}
+
+\title{第三次实验报告}
+\author{谢宇倩 21070001106}
+\date{September 2024}
+
+\begin{document}
+
+\maketitle
+\newpage
+
+
+\section{命令行环境}
+
+\subsection{任务控制}
+\begin{itemize}
+ \item 我们可以使用类似 ps aux | grep 这样的命令来获取任务的 pid ，然后您可以基于 pid 来结束这些进程。但我们其实有更好的方法来做这件事。在终端中执行 sleep 10000 这个任务。然后用 Ctrl-Z 将其切换到后台并使用 bg 来继续允许它。现在，使用 pgrep 来查找 pid 并使用 pkill 结束进程而不需要手动输入 pid。
+ 在终端中执行 sleep 10000 。然后用 Ctrl-Z 将其切换到后台并使用 bg 来继续允许
+它。
+ \begin{lstlisting}
+ sleep 10000
+ Ctrl-Z
+ bg
+ \end{lstlisting}
+ 让当前终端的前台进程休眠 10000 秒，然后 Ctrl+Z挂起sleep进程，可以看到输出了当前进程状态\lstinline|[1]+  Stopped sleep 10000|，表示已被挂起，然后bg让挂起的进程放到后台继续执行。\\
+ \includegraphics [width=0.9\textwidth]{images/1.png} \\
+ \begin{lstlisting}
+ pgrep sleep
+ pkill sleep
+ \end{lstlisting}
+ pgrep查找当前运行命令名称有sleep的进程进程，返回了PID为2918的进程，然后pkill终止所有命令名称包含sleep的进程：\\
+ \includegraphics [width=0.9\textwidth]{images/2.png} \\
+ \item 如果您希望某个进程结束后再开始另外一个进程， 应该如何实现呢？\\
+ 在这个练习中，我们使用 sleep 60 & 作为先执行的程序。一种方法是使用 wait 命令。尝试启动这个休眠命令，然后待其结束后再执行 ls 命令。\\
+ \includegraphics [width=0.9\textwidth]{images/3.png} \\
+ 但是，如果在不同的 bash 会话中进行操作，则上述方法就不起作用了。因为 wait 只能对子进程起作用。之前我们没有提过的一个特性是，kill 命令成功退出时其状态码为 0 ，其他状态则是非 0。kill -0 则不会发送信号，但是会在进程不存在时返回一个不为 0 的状态码。请编写一个 bash 函数 pidwait ，它接受一个 pid 作为输入参数，然后一直等待直到该进程结束。\\
+ \textbf{编写函数如下：}
+ \begin{lstlisting}
+pidwait()
+{
+   while kill -0 $1 #循环直到进程结束
+   do
+   sleep 1 
+   done
+   ls
+}
+ \end{lstlisting}
+ 这里用while循环直到 kill -0 \$1 命令失败，循环体中让脚本sleep 1秒（避免在检查进程状态时过度占用 CPU 资源），循环后列出当前目录下的文件和目录。ps: \textcolor{red}{while 判断的是命令行的返回值而不是bool值}，和其他语言不一样。\\
+ \textbf{运行结果：}\\
+ \includegraphics [width=0.9\textwidth]{images/4.png} \\
+\end{itemize}
+
+\subsection{终端多路复用}
+\begin{itemize}
+ \item 请完成 tmux 教程参考这些步骤来学习如何自定义tmux。\\
+ 安装tmux：\\
+ \begin{lstlisting}
+ sudo apt install tmux # version 3.2a-4ubuntu0.2 
+ \end{lstlisting}
+ \includegraphics [width=0.9\textwidth]{images/5.png} \\
+ 创建tmux会话：\\
+ \begin{lstlisting}
+ tmux
+ \end{lstlisting}
+ \includegraphics [width=0.9\textwidth]{images/6.png} \\
+ 同时按下 Ctrl+b 再按下 \% 拆分窗格：\\
+ \includegraphics [width=0.9\textwidth]{images/7.png} \\
+ Ctrl+b 和 left 切换窗格：\\
+ \includegraphics [width=0.9\textwidth]{images/8.png} \\
+ exit或者 Ctrl+d关闭窗格：\\
+ \includegraphics [width=0.9\textwidth]{images/9.png} \\
+
+\end{itemize}
+
+\subsection{别名}
+\begin{itemize}
+ \item 创建一个 dc 别名，它的功能是当我们错误的将 cd 输入为 dc 时也能正确执行。
+ \begin{lstlisting}
+ alias dc=cd
+ \end{lstlisting}
+ 可以看到dc和cd效果一样，用dc也进入了根目录。\\
+ \includegraphics [width=0.9\textwidth]{images/10.png} \\
+ \item 执行 history | awk '{$1="";print substr($0,2)}' | sort | uniq -c | sort -n | tail -n 10 来获取您最常用的十条命令，尝试为它们创建别名。\\
+ \includegraphics [width=0.9\textwidth]{images/11.png} \\
+ 显示我最常使用ls命令，我给它创建了别名ks：\\
+ \includegraphics [width=0.9\textwidth]{images/12.png} \\
+ 可以看到，ks命令实现了ls的功能。\\
+ 
+\end{itemize}
+
+\subsection{配置文件}
+\begin{itemize}
+ \item 为您的配置文件新建一个文件夹，并设置好版本控制 在其中添加至少一个配置文件，比如说您的 shell，在其中包含一些自定义设置（可以从设置 \$PS1 开始）。 建立一种在新设备进行快速安装配置的方法（无需手动操作）。最简单的方法是写一个 shell 脚本对每个文件使用 ln -s，也可以使用专用工具 在新的虚拟机上测试该安装脚本。 将您现有的所有配置文件移动到项目仓库里。 将项目发布到GitHub。
+  \begin{lstlisting}
+mkdir ~/gits/dotfiles
+git init ~/gits/dotfiles
+ls -a ~/gits/dotfiles
+  \end{lstlisting}
+ \includegraphics [width=0.9\textwidth]{images/13.png} \\
+\end{itemize}
+
+\subsection{远端设备}
+\begin{itemize}
+ \item 前往 ~/.ssh/ 并查看是否已经存在 SSH 密钥对。如果不存在，请使用 ssh-keygen -o -a 100 -t ed25519 来创建一个。\\
+ 查看不存在，所以创建了一个：\\
+ \includegraphics [width=0.9\textwidth]{images/14.png} \\
+ \item 在 .ssh/config 加入下面内容：\\
+ \begin{lstlisting}
+Host vm
+   User username_goes_here
+   HostName ip_goes_here
+   IdentityFile ~/.ssh/id_ed25519
+   LocalForward 9999 localhost:8888
+  \end{lstlisting}
+  \includegraphics [width=0.9\textwidth]{images/15.png} \\
+    \begin{enumerate}
+     \item 使用 ssh-copy-id vm 将 ssh 密钥拷贝到服务器。\\
+     \includegraphics [width=0.9\textwidth]{images/16.png} \\
+     \item 使用 python -m http.server 8888 在您的虚拟机中启动一个 Web 服务器并通过本机的 http://localhost:9999 访问虚拟机上的 Web 服务器。\\
+     \includegraphics [width=0.9\textwidth]{images/17.png} \\
+     \item 使用 sudo vim /etc/ssh/sshd\_config 编辑 SSH 服务器配置，\\
+     通过修改 PasswordAuthentication 的值为“no”来禁用密码验证:\\
+     \includegraphics [width=0.9\textwidth]{images/18.png} \\
+     通过修改 PermitRootLogin 的值为“no”来禁用 root 登录。\\
+     \includegraphics [width=0.9\textwidth]{images/19.png} \\
+     然后重启服务即完成了。\\
+     \item (附加题) 在虚拟机中安装 mosh 并启动连接。然后断开服务器/虚拟机的网络适配器。mosh 可以恢复连接吗？\\
+     安装mosh：\\
+      \begin{lstlisting}
+sudo apt-get install mosh
+mosh-server
+  \end{lstlisting}
+  \includegraphics [width=0.9\textwidth]{images/20.png} \\
+  用mosh连接虚拟机：\\
+  \includegraphics [width=0.9\textwidth]{images/21.png} \\
+  断开虚拟机的网络适配器：\\
+  \includegraphics [width=0.9\textwidth]{images/22.png} \\
+  观察mosh是否可以恢复连接:\\
+  断开之后显示“连接断开，尝试重连”，不能主动恢复连接，除非网络恢复并且客户端能重新和服务器进行通信。\\
+     \item (附加题) 查看 ssh 的 -N 和 -f 选项的作用，找出在后台进行端口转发的命令是什么？\\
+     -N 不执行任何命令，即只进行端口转发而不打开一个远程shell；\\
+     -f 在所有需要的端口都转发并且认证完成之后放到后台运行。\\
+     后台进行端口转发的命令是：\\
+     \begin{lstlisting}
+ssh -fN -L 9999:localhost:8888 pi
+     \end{lstlisting}
+
+    \end{enumerate}
+    
+\end{itemize}
+
+\section{Python 入门基础}
+
+这一部分我参考菜鸟教程的python3教程（https://www.runoob.com/python3/python3-tutorial.html）进行了学习，并从Educoder找了练习题写代码熟悉语法。\\
+\begin{itemize}
+\item 1. Helllo World\\
+\includegraphics [width=0.9\textwidth]{images/23.png} \\
+\item 2. 目标像素替换\\
+\includegraphics [width=0.9\textwidth]{images/24.png} \\
+这题没啥弯弯绕，根据题目描述写代码就好了：\\
+     \begin{lstlisting}
+r, c = map(int, input().split())
+sr, sc, newclr = map(int, input().split())
+image = [[-1] * (r + 2) for i in range(c + 2)]
+image_sn = [[1] * (r + 2) for i in range(c + 2)]
+for i in range(1, r + 1):
+    image[i][1:c + 1] = list(map(int, input().split()))
+def cn(x, y):
+    dx, dy = [0, 0, 1, -1], [1, -1, 0, 0]
+    for i in range(4):
+        if image_sn[x + dx[i]][y + dy[i]]:
+            if image[x + dx[i]][y + dy[i]] == 
+            image[sr + 1][sc + 1]:
+                image[x + dx[i]][y + dy[i]] = newclr
+                image_sn[x + dx[i]][y + dy[i]] = 0
+                cn(x + dx[i], y + dy[i])
+image_sn[sr + 1][sc + 1] = 0
+cn(sr + 1, sc + 1)
+image[sr + 1][sc + 1] = newclr
+for i in range(1, r + 1):
+    for j in range(1, c + 1):
+        print(image[i][j], end = " ")
+    print()
+     \end{lstlisting}
+\includegraphics [width=0.9\textwidth]{images/25.png} \\
+通过测评。\\
+\item 3. Hanoi双塔问题\\
+\includegraphics [width=0.9\textwidth]{images/26.png} \\
+Hanoi问题我们学C语言的时候就很熟悉了，典型的递归，双塔问题稍微变了个形，也是一样用递归。\\
+写出代码：\\
+\begin{lstlisting}
+def f(n):
+    if n==1:
+        return 2
+    else:
+        return 2*f(n-1)+2 #递推表达式计算
+n=eval(input())
+print(f(n))
+\end{lstlisting}
+\includegraphics [width=0.9\textwidth]{images/27.png} \\
+通过测评。\\
+\item 4. 查找素数对\\
+\includegraphics [width=0.9\textwidth]{images/28.png} \\
+写了一个huzhi函数，用辗转相除法，计算两个整数的最大公约数。在主程序中用三个嵌套循环遍历输入的列表 a 中的所有可能的三元组，找出数组中所有两两互质的三元组的数量。\\
+\begin{lstlisting}
+def huzhi(a, b):
+    c = 0
+    if a < b:
+        c = a
+        a = b
+        b = c
+    while b != 0:
+        c = a%b
+        a = b
+        b = c
+    return a
+
+n = int(input())
+a = []
+flag = 0
+count = 0
+a = list(map(int,input().split()))
+for i in range(n - 2):
+    for j in range(i + 1, n):
+        for k in range(j + 1, n):
+            if(huzhi(a[i], a[j]) == 1 and 
+            huzhi(a[i], a[k]) == 1 and 
+            huzhi(a[k], a[j]) == 1):
+                count += 1
+            elif(huzhi(a[i], a[j]) != 1 and 
+            huzhi(a[i], a[k]) != 1 and 
+            huzhi(a[k], a[j]) != 1):
+                count += 1
+print(count)
+\end{lstlisting}
+\includegraphics [width=0.9\textwidth]{images/29.png} \\
+通过测评。\\
+\item 5. 切分正方形\\
+\includegraphics [width=0.9\textwidth]{images/30.png} \\
+这题也是按照题目描述的大小关系写代码即可：\\
+\begin{lstlisting}
+l = eval(input())
+maxlen = 1
+count = 1
+for i in l:
+    if min(i) > maxlen:
+        maxlen = min(i)
+        count = 1
+    elif min(i) == maxlen:
+        count += 1
+print(count)
+\end{lstlisting}
+\includegraphics [width=0.9\textwidth]{images/31.png} \\
+通过测评。\\
+\item 6. 特殊变换\\
+\includegraphics [width=0.9\textwidth]{images/32.png} \\
+我用了itertools 库里的permutations 函数，先读取输入，然后用for计算阶乘，使用 permutations(a) 生成列表 a 的所有排列，遍历每个排列，计算最大值和最小值的差值，如果小于当前的 ans就更新 ans。\\
+\begin{lstlisting}
+from itertools import permutations
+
+n, k = map(int, input().split())
+l = list(input() for i in range(n))
+x = 1
+for i in range(1, k + 1):
+    x = x * i
+mx, mn = 0, float('inf')
+a = list(range(0, k ))
+ans = float('inf')
+for prem in permutations(a):
+    mx, mn = 0, float('inf')
+    for i in range(n):
+        p = ''.join(l[i][j] for j in prem)
+        mx = max(mx, int(p))
+        mn = min(mn, int(p))
+    ans = min(ans, mx - mn)
+print(ans)
+\end{lstlisting}
+\includegraphics [width=0.9\textwidth]{images/33.png} \\
+通过测评。\\
+\end{itemize}
+
+
+\section{Python 视觉应用}
+
+参考了python计算机视觉编程的第一章（https://github.com/silenove/python\_ebook/blob/master
+/python计算机视觉.pdf），做了第一章的课后练习题。\\
+\begin{itemize}
+\item 将一幅图像进行高斯模糊处理。随着 σ 的增加，绘制出图像轮廓。在你绘制出的图中，图像的轮廓有何变化？你能解释为什么会发生这些变化吗？\\
+\textbf{代码：}\\
+\begin{lstlisting}
+import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+
+# 读取图像
+image = cv2.imread(r'gentledog.jpg')
+# 把图像从BGR转换为RGB
+image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+# 高斯模糊
+sigma_values = [0.01, 0.5, 10, 20]  # 不同的σ值
+for sigma in sigma_values:
+    # 用不同的σ值进行高斯模糊
+    blurred_image = 
+    cv2.GaussianBlur(image_rgb, (0, 0), sigma)
+    # Canny绘制图像轮廓
+    # edges = cv2.Canny(blurred_image, 100, 200) 
+    # 显示图像
+    plt.subplot(2, 2, sigma_values.index(sigma) + 1)
+    plt.imshow(blurred_image, cmap='gray')
+    plt.title(f'σ = {sigma}')
+    plt.axis('off')
+# 显示所有图像
+plt.show()
+\end{lstlisting}
+\textbf{高斯模糊的效果：}\\
+\includegraphics [width=0.9\textwidth]{images/34.png}\\
+\textbf{再用Canny函数绘制图像轮廓的效果：}\\
+\includegraphics [width=0.9\textwidth]{images/35.png}\\
+可以看出，\textcolor{red}{西格玛越小图像越清晰，保留的细节更多；西格玛越大图像越模糊，细节更少。}σ=20时候，图像非常模糊，像近视了一样，绘制出的轮廓几乎消失。这种变化的原因是高斯模糊通过在图像的每个像素周围应用高斯权重来平滑图像。西格玛值越大，权重分布的范围越广，每个像素的值越受到更多周围像素的影响，图像就变得更加平滑了，轮廓和细节会丢失。\\
+\item 通过将图像模糊化，然后从原始图像中减去模糊图像，来实现反锐化图像掩模操作（http://en.wikipedia.org/wiki/Unsharp\_masking）。反锐化图像掩模操作可以实现图像锐化效果。试在彩色和灰度图像上使用反锐化图像掩模操作，观察该操作的效果。\\
+\textbf{代码：}\\
+\begin{lstlisting}
+import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.font_manager import FontProperties
+
+plt.rcParams['font.sans-serif'] = ['SimHei']
+plt.rcParams['axes.unicode_minus'] = False
+
+color_image = cv2.imread('gentledog.jpg')
+# 转换为灰度图像
+gray_image = 
+   cv2.cvtColor(color_image, cv2.COLOR_BGR2GRAY)
+
+def unsharp_masking(image, sigma, strength):
+    # 应用高斯模糊
+    blurred = cv2.GaussianBlur(image, (0, 0), sigma)
+    # 计算掩模
+    mask = image - blurred
+    # 增强图像
+    sharpened = cv2.addWeighted
+       (image, 1 + strength, blurred, -strength, 0)
+    return sharpened, mask
+
+# 反锐化图像掩模
+sigma = 1.0
+strength = 1.5
+sharpened_color, mask_color = 
+    unsharp_masking(color_image, sigma, strength)
+sharpened_gray, mask_gray = 
+    unsharp_masking(gray_image, sigma, strength)
+
+plt.figure(figsize=(12, 6))
+# 原始彩色图像
+plt.subplot(2, 3, 1)
+plt.imshow(cv2.cvtColor
+    (color_image, cv2.COLOR_BGR2RGB))
+plt.title('原始彩色图像')
+plt.axis('off')
+# 锐化后的彩色图像
+plt.subplot(2, 3, 2)
+plt.imshow(cv2.cvtColor
+    (sharpened_color, cv2.COLOR_BGR2RGB))
+plt.title('锐化后的彩色图像')
+plt.axis('off')
+# 彩色掩模
+plt.subplot(2, 3, 3)
+plt.imshow(mask_color, cmap='gray')
+plt.title('彩色掩模')
+plt.axis('off')
+# 原始灰度图像
+plt.subplot(2, 3, 4)
+plt.imshow(gray_image, cmap='gray')
+plt.title('原始灰度图像')
+plt.axis('off')
+# 锐化后的灰度图像
+plt.subplot(2, 3, 5)
+plt.imshow(sharpened_gray, cmap='gray')
+plt.title('锐化后的灰度图像')
+plt.axis('off')
+# 灰度掩模
+plt.subplot(2, 3, 6)
+plt.imshow(mask_gray, cmap='gray')
+plt.title('灰度掩模')
+plt.axis('off')
+
+plt.show()
+\end{lstlisting}
+首先读取原始图像，然后应用高斯模糊，再从原始图像中减去模糊图像得到掩模，最后将掩模加回到原始图像上增强细节。\\
+\textbf{图像处理效果：}\\
+\includegraphics [width=0.9\textwidth]{images/36.png}\\
+可以看到，反锐化图像掩模处理后处理后图像边缘变得更加明显了，小细节更加清晰了，图中的噪点也变得更明显了。此外，彩色图像的颜色更加清晰生动了，而灰度图像则是明暗对比增强了。
+\item 除了直方图均衡化，商图像是另一种图像归一化的方法。商图像可以通过除以模糊后的图像 I/(I * Gσ) 获得。尝试使用该方法，并使用一些样本图像进行验证。\\
+\textbf{代码：}\\
+\begin{lstlisting}
+import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.font_manager import FontProperties
+
+plt.rcParams['font.sans-serif'] = ['SimHei']
+plt.rcParams['axes.unicode_minus'] = False
+def compute_divided_diff_image(image, sigma):
+    image_float = image.astype(np.float64)
+    # 应用高斯模糊
+    blurred = 
+        cv2.GaussianBlur(image_float, (0, 0), sigma)
+    # 计算商图像
+    divided_diff_image = image_float / blurred
+    # 转换成 uint8 类型
+    divided_diff_image_uint8 = 
+    np.clip(divided_diff_image, 0, 255).astype(np.uint8)
+    return divided_diff_image_uint8
+
+# 读取灰度图像
+image_path = 'gentledog.jpg'
+image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE) 
+
+    # 定义高斯模糊标准差
+    sigma = 2.0
+    # 计算商图像
+    divided_diff_image = 
+        compute_divided_diff_image(image, sigma)
+    # 显示结果
+    plt.figure(figsize=(12, 6))
+    plt.subplot(1, 2, 1)
+    plt.imshow(image, cmap='gray')
+    plt.title('原始图像')
+    plt.axis('off')
+    plt.subplot(1, 2, 2)
+    plt.imshow(divided_diff_image, cmap='gray')
+    plt.title('商图像')
+    plt.axis('off')
+    plt.show()
+\end{lstlisting}
+\textbf{图像处理结果：}\\
+\includegraphics [width=0.9\textwidth]{images/37.png}\\
+\end{itemize}
+
+
+\section{心得体会}
+
+本周进行了命令行环境、Python入门基础和Python视觉应用的学习，内容挺多的，感觉一堆知识突然进入了我的脑子里。
+
+首先，通过学习命令行环境，我算是彻底掌握了如何使用终端窗口与系统进行交互。通过学习如何使用命令行来启动、监控和终止进程，我能够高效地管理后台进程和系统资源了。通过学习 tmux ，我会在一个终端窗口中管理多个会话了，而且tmux可以在断开连接后恢复工作，特别实用可靠。为自己常用命令设置别名能增加容错性，比如我经常会手误按到键盘上旁边的按键，给ls一个别名ks，之后我再手快打错的话就不会出错了，此外还能通过给长命令简短的别名来简化工作流程。学习配置文件让我能够定制自己的命令行环境，让它更符合我自己的习惯，以此提高效率。SSH访问远程服务器的部分让我学会了如何生成和管理SSH密钥，如何编辑 SSH 服务器配置，如何远程访问服务器。学习和实操命令行环境是一个深入了解操作系统和提高工作效率的过程，我相信它们会在我未来特别有用。
+
+由于之前已经深入学习过C和C++，Python的学习并没有花费我多少时间，毕竟高级语言其实很多地方都大差不差。我发现Python的使用非常简约，有很多内置函数或者外置的库，同样的功能用C需要十几行或者几十行，用Python只要三四行。虽然Python可能在效率上不如C那种更底层的语言，但是对于写代码的人来说真的方便了好多，如果以后要不追求效率地实现复杂功能的话，我想我会多多考虑使用Python。
+
+学习Python基础之后我阅读了所给的《python计算机视觉编程》第一章，了解了基本图像操作和处理的库和它们函数的使用，比如用PIL进行图像基本处理，用Matplotlib绘制图像，还有NumPy和SciPy进行各种图像操作。学习之后我通过第一章课后练习题来巩固对图像处理的理解和库的使用，由于能力有限和内容较多时间较短，我只完成了前三题，之后我还会继续学习和练习。感觉这周的学习为我打开了计算机视觉的大门，不仅让我对图像处理有了初步的认识，还激发了我对更深层次技术探索的兴趣。
+
+总而言之，本周的学习和实验干货满满，让我掌握了特别多知识，编程实践能力也得到了提升。
+
+\textbf{ 最后还是一样附上 github ：https://github.com/xxxyuq/my\_first}
+
+
+\end{document}
